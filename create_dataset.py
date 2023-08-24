@@ -8,10 +8,10 @@ from modules.data_to_atoms import build_atoms
 
 parser = argparse.ArgumentParser(description='Parsing and partitioning QM9.')
 parser.add_argument('--xyz_folder', type=str, 
-    default='./datasets/raw_xyz/',
+    default='/pscratch/sd/k/khegazy/datasets/QM9/datasets/raw_xyz/',
     help='Folder for xyz files')
 parser.add_argument('--output_folder', type=str, 
-    default='./datasets/',
+    default='/pscratch/sd/k/khegazy/datasets/QM9/datasets/',
     help='Folder to output dataset')
 parser.add_argument('--filename', type=str, 
     required=True,
