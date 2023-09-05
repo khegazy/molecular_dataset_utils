@@ -6,7 +6,10 @@ import numpy as np
 from modules.data_to_atoms import build_atoms
 import os
 from monty.serialization import loadfn
+"""
+TODO: ADD CHARGES AND SPIN MARKERS
 
+"""
 
 parser = argparse.ArgumentParser(description='Parsing and partitioning QM9.')
 parser.add_argument('--data', type=str,
