@@ -6,13 +6,10 @@ import numpy as np
 from modules.data_to_atoms import build_atoms
 import os
 from monty.serialization import loadfn
-from pymatgen.core.structure import Molecule
-from pymatgen.analysis.graphs import MoleculeGraph
-from pymatgen.analysis.local_env import OpenBabelNN
+
 
 parser = argparse.ArgumentParser(description='Parsing and partitioning QM9.')
 parser.add_argument('--data', type=str,
-    required = True,
     help='Folder for the data')
 parser.add_argument('--output_folder', type=str, 
     default='/pscratch/sd/m/mavaylon/sam_ldrd/radqm9/',
@@ -28,15 +25,16 @@ parser.add_argument('--size', type=int,
     help='Number of molecules in output')
 
 # This assumes that you have already untarred/unzipped the trajectories
-base_dir = "/pscratch/sd/m/mavaylon/radqm9/radQM9/20230812_radQM9_trajectories"
+base_dir = "/pscratch/sd/m/mavaylon/sam_ldrd/radqm9/radQM9/20230812_radQM9_trajectories"
 
 # Get list of dictionaries of the data. Each dict is a molecule
 data = loadfn(os.path.join(base_dir, "qm9pm3_trajectory_0.json"))
 
+args = parser.parse_args()
 if args.size is not None:
     # Create dataset with set number of molecules
     atoms_list = [
-        build_atoms(data=molecule, energy='resp', forces='gradients') for molecule in data
+        build_atoms(data=molecule, elements='species', positions = 'geometries', energy='resp', forces='gradients') for molecule in data
     ]
     ase.io.write(
         F"{args.output_folder}/{args.filename}.xyz",
@@ -50,7 +48,7 @@ else:
         *args.data_split_ratio))
     idx1 = int(len(data)*args.data_split_ratio[0])
     idx2 = idx1 + int(len(data)*args.data_split_ratio[1])
-    idx3 = int(len(xyz_files)*np.sum(args.data_split_ratio))
+    idx3 = int(len(data)*np.sum(args.data_split_ratio))
     loop_args = [
         ('train', (0, idx1)),
         ('valid', (idx1, idx2)),
@@ -58,7 +56,7 @@ else:
     ]
     for dataset, (idxI, idxF) in loop_args:
         atoms_list = [
-            build_atoms(data=molecule, energy='resp', forces='gradients') for molecule in data[idxI:idxF]
+            build_atoms(data=molecule, elements='species', positions = 'geometries', energy='resp', forces='gradients') for molecule in data[idxI:idxF]
         ]
         ase.io.write(
             F"{args.output_folder}/{args.filename}_{dataset}.xyz",
