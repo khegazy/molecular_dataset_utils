@@ -6,10 +6,6 @@ import numpy as np
 from modules.data_to_atoms import build_atoms
 import os
 from monty.serialization import loadfn
-"""
-TODO: ADD CHARGES AND SPIN MARKERS
-
-"""
 
 parser = argparse.ArgumentParser(description='Parsing and partitioning QM9.')
 parser.add_argument('--data', type=str,
@@ -33,12 +29,23 @@ base_dir = "/pscratch/sd/m/mavaylon/sam_ldrd/radqm9/radQM9/20230812_radQM9_traje
 # Get list of dictionaries of the data. Each dict is a molecule
 data = loadfn(os.path.join(base_dir, "qm9pm3_trajectory_0.json"))
 
+# prepare forces
+def negative_forces(forces: list):
+    forces = [[[z * -1 for z in y] for y in x] for x in forces]
+    breakpoint()
+    return forces
+
 args = parser.parse_args()
 if args.size is not None:
     # Create dataset with set number of molecules
-    atoms_list = [
-        build_atoms(data=molecule, elements='species', positions = 'geometries', energy='resp', forces='gradients') for molecule in data
-    ]
+    atoms_list = []
+    for molecule in data:
+        # prepare forces per molecule (i.e item in data list) 
+        forces = negative_forces(molecule['gradients'])
+        for i in range(len(molecule['geometries'])):
+            atom = build_atoms(data=molecule, elements='species', positions = molecule['geometries'][i],
+                               charge='charge', spin='spin', forces=forces[i])
+            atoms_list.append(atom)
     ase.io.write(
         F"{args.output_folder}/{args.filename}.xyz",
         atoms_list,
@@ -57,10 +64,15 @@ else:
         ('valid', (idx1, idx2)),
         ('test', (idx2, idx3))
     ]
-    for dataset, (idxI, idxF) in loop_args:
-        atoms_list = [
-            build_atoms(data=molecule, elements='species', positions = 'geometries', energy='resp', forces='gradients') for molecule in data[idxI:idxF]
-        ]
+    for dataset, (idxI, idxF) in loop_args:         
+        atoms_list = []
+        for molecule in data[idxI:idxF]:
+            # prepare forces per molecule (i.e item in data list) 
+            forces = negative_forces(molecule['gradients'])
+            for i in range(len(molecule['geometries'])):
+                atom = build_atoms(data=molecule, elements='species', positions = molecule['geometries'][i],
+                                   charge='charge', spin='spin', forces=forces[i])
+                atoms_list.append(atom)
         ase.io.write(
             F"{args.output_folder}/{args.filename}_{dataset}.xyz",
             atoms_list,
